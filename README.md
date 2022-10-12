@@ -1,0 +1,1 @@
+## in order to run the script without being asked for a sudo password, please follow the instructions in [this](https://askubuntu.com/questions/155791/how-do-i-sudo-a-command-in-a-script-without-being-asked-for-a-password) for **du_homes.sh**

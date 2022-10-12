@@ -1,0 +1,11 @@
+{
+    "users": {
+        "a": "a@mail.com",
+        "b": "b@mail.com"
+    },
+    "managers": {
+        "c": "c@mail.com"
+    },
+    "developer": {
+    }
+}

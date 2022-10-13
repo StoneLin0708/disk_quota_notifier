@@ -15,6 +15,15 @@ from schedule import every, run_pending
 
 
 def get_du_homes():
+    """
+    Parse du -s /home/* output
+    return: List of (size in bytes, user name)
+    """
+    # !!! Important note !!!:
+    # Please follow readme instructions to set up this script
+    # to run with sudo without the password.
+    # The reason is that running du -s /home/* as root inside a python script
+    # is problematic and dangerous.
     o = getoutput('sudo ./du_homes.sh')
     du = []
     for l in o.split('\n'):
@@ -52,6 +61,7 @@ class MailForwarder:
         msg['To'] = ','.join(self._get_user_emails())
         du_msg = '\n'.join(
             [f'{u:12}:{d / 2**20: 8.2f} GB' for d, u in du_homes])
+        # TODO: improve the message
         msg.attach(
             MIMEText(f'Home Directory Usage Notification\n\n{du_msg}', 'plain'))
         return msg
@@ -76,10 +86,13 @@ class MailForwarder:
     def update(self):
         try:
             total, used, free = shutil.disk_usage('/home')
+            # check if the disk usage is over the threshold
+            # if so, send a notification
             if used / total > self.config['notify_threshold']:
                 self._send_du_notification()
         except Exception as e:
             self.logger.error(f'update failed: {e}')
+            # send an error mail to the managers when an error occurs
             self._send_mail_to(
                 self._create_error_mail(
                     f'{dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")} : Sending Mail Failed',
@@ -122,6 +135,8 @@ def main():
         logger=logger,
     )
 
+    # create a signal handler to stop the script to avoid
+    # unexpected shutdown during sending mails
     stop = False
 
     def signal_handler(sig, frame):
@@ -135,9 +150,13 @@ def main():
 
     signal.signal(signal.SIGINT, signal_handler)
 
+    # TODO: make the interval configurable, please refer to the schedule
+    # documentation for more details
+    # https://schedule.readthedocs.io/en/stable/
     every().monday.do(forwarder.update)
     # every(3).seconds.do(forwarder.update)
 
+    # run the scheduler loop
     while is_running():
         run_pending()
         time.sleep(60)
